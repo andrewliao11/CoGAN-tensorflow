@@ -7,7 +7,8 @@ CoGAN can learn a **joint distribution** with just samples drawn from the margin
 The following figure is the result showed in paper:
 ![](https://github.com/andrewliao11/CoGAN-tensorflow/blob/master/illustration.png?raw=true)
 
-The experiment result of UDA problem is very impressive to me, which inpires me to implement this in Tensorflow.
+- Note that all the natural images here is unpaired. In a nutshell, in each training process, the input of the descriminator is not aligned.
+- The experiment result of UDA problem is very impressive, which inpires me to implement this in Tensorflow.
 
 ## Requirement
 
@@ -42,15 +43,15 @@ tensorboard --logdir=logs
 
 ## Results
 
-- model in 15th epoch   
-![](https://github.com/andrewliao11/CoGAN-tensorflow/blob/master/top_train_15_0409.png?raw=true)
-![](https://github.com/andrewliao11/CoGAN-tensorflow/blob/master/bot_train_15_0409.png?raw=true)
+- model in 9th epoch   
+![](https://github.com/andrewliao11/CoGAN-tensorflow/blob/master/top_train_09_0085.png?raw=true)
+![](https://github.com/andrewliao11/CoGAN-tensorflow/blob/master/bot_train_09_0085.png?raw=true)
 
-- model in 24th epoch   
-![](https://github.com/andrewliao11/CoGAN-tensorflow/blob/master/top_train_24_0495.png?raw=true)
-![](https://github.com/andrewliao11/CoGAN-tensorflow/blob/master/bot_train_24_0495.png?raw=true)
+- model in 19th epoch   
+![](https://github.com/andrewliao11/CoGAN-tensorflow/blob/master/top_train_19_0025.png?raw=true)
+![](https://github.com/andrewliao11/CoGAN-tensorflow/blob/master/bot_train_19_0025.png?raw=true)
 
-From the experiment result, the model around the 15th epoch is better.   
+We can see that without paired infomation, the network can generate two different images with the same high-level concepts.   
 ***Note: To avoid the fast convergence of D (discriminator) network, G (generator) network is updated twice for each D network update, which differs from original paper.***
 
 
