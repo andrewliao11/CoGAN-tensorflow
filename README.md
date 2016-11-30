@@ -47,13 +47,13 @@ tensorboard --logdir=logs
 
 ## Results
 
-- model in 9th epoch   
-![](https://github.com/andrewliao11/CoGAN-tensorflow/blob/master/top_train_09_0085.png?raw=true)
-![](https://github.com/andrewliao11/CoGAN-tensorflow/blob/master/bot_train_09_0085.png?raw=true)
+- model in 1st epoch   
+![](https://github.com/andrewliao11/CoGAN-tensorflow/blob/master/top_train_01_0453.png?raw=true)
+![](https://github.com/andrewliao11/CoGAN-tensorflow/blob/master/bot_train_01_0453.png?raw=true)
 
-- model in 19th epoch   
-![](https://github.com/andrewliao11/CoGAN-tensorflow/blob/master/top_train_19_0025.png?raw=true)
-![](https://github.com/andrewliao11/CoGAN-tensorflow/blob/master/bot_train_19_0025.png?raw=true)
+- model in 24th epoch   
+![](https://github.com/andrewliao11/CoGAN-tensorflow/blob/master/top_train_24_0495.png?raw=true)
+![](https://github.com/andrewliao11/CoGAN-tensorflow/blob/master/bot_train_24_0495.png?raw=true)
 
 - ***We can see that without paired infomation, the network can generate two different images with the same high-level concepts.***   
 - ***Note: To avoid the fast convergence of D (discriminator) network, G (generator) network is updated twice for each D network update, which differs from original paper.***
