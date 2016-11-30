@@ -34,6 +34,12 @@ $ python main.py --is_train True
 ```
 During the training process, you can see the average loss of the generators and the discriminators, which can hellp your debugging. After training, it will save some sample to the ```./samples/top and ./samples/bot```, respectively. 
 
+To visualize the the whole training process, you can use Tensorboard:
+```
+tensorboard --logdir=logs
+```
+![](https://github.com/andrewliao11/CoGAN-tensorflow/blob/master/vis.png?raw=true)
+
 ## Results
 
 - model in 15th epoch   
