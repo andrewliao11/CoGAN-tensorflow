@@ -292,19 +292,19 @@ class CoGAN(object):
 	with tf.variable_scope(name):
 	    if reuse:
 		tf.get_variable_scope().reuse_variables()
-            yb = tf.reshape(y, [self.batch_size, 1, 1, self.y_dim])
-            x = conv_cond_concat(image, yb)
+            #yb = tf.reshape(y, [self.batch_size, 1, 1, self.y_dim])
+            #x = conv_cond_concat(image, yb)
 
-            h0 = lrelu(conv2d(x, self.c_dim + self.y_dim, name='d'+branch+'_h0_conv', reuse=False))
-            h0 = conv_cond_concat(h0, yb)
+            h0 = lrelu(conv2d(image, self.c_dim, name='d'+branch+'_h0_conv', reuse=False))
+            #h0 = conv_cond_concat(h0, yb)
 
-            h1 = lrelu(d_bn1(conv2d(h0, self.df_dim + self.y_dim, name='d'+branch+'_h1_conv', reuse=False), reuse=reuse))
+            h1 = lrelu(d_bn1(conv2d(h0, self.df_dim, name='d'+branch+'_h1_conv', reuse=False), reuse=reuse))
             h1 = tf.reshape(h1, [self.batch_size, -1])            
-            h1 = tf.concat(1, [h1, y])
+            #h1 = tf.concat(1, [h1, y])
 
         # layers that share variables
         h2 = lrelu(self.d_bn2(linear(h1, self.dfc_dim, 'd_h2_lin', reuse=share_params), reuse=share_params))
-        h2 = tf.concat(1, [h2, y])
+        #h2 = tf.concat(1, [h2, y])
 
         h3 = linear(h2, 1, 'd_h3_lin', reuse=share_params)
             
@@ -321,19 +321,19 @@ class CoGAN(object):
         s = self.output_size
         s2, s4 = int(s/2), int(s/4) 
         # yb = tf.expand_dims(tf.expand_dims(y, 1),2)
-        yb = tf.reshape(y, [self.batch_size, 1, 1, self.y_dim])
-        z = tf.concat(1, [z, y])
+        #yb = tf.reshape(y, [self.batch_size, 1, 1, self.y_dim])
+        #z = tf.concat(1, [z, y])
 
         h0 = tf.nn.relu(self.g_bn0(linear(z, self.gfc_dim, 'g_h0_lin', reuse=share_params), reuse=share_params))
-        h0 = tf.concat(1, [h0, y])
+        #h0 = tf.concat(1, [h0, y])
 
         h1 = tf.nn.relu(self.g_bn1(linear(z, self.gf_dim*2*s4*s4,'g_h1_lin',reuse=share_params),reuse=share_params))
         h1 = tf.reshape(h1, [self.batch_size, s4, s4, self.gf_dim * 2])
-        h1 = conv_cond_concat(h1, yb)
+        #h1 = conv_cond_concat(h1, yb)
 
         h2 = tf.nn.relu(self.g_bn2(deconv2d(h1, [self.batch_size,s2,s2,self.gf_dim * 2], 
 				name='g_h2', reuse=share_params), reuse=share_params))
-        h2 = conv_cond_concat(h2, yb)
+        #h2 = conv_cond_concat(h2, yb)
 
 	# layers that do not share the variable
 	with tf.variable_scope(name):
