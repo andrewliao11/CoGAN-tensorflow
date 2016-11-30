@@ -43,7 +43,7 @@ To visualize the the whole training process, you can use Tensorboard:
 ```
 tensorboard --logdir=logs
 ```
-![](https://github.com/andrewliao11/CoGAN-tensorflow/blob/master/vis.png?raw=true)
+![](https://github.com/andrewliao11/CoGAN-tensorflow/blob/master/asset/vis.png?raw=true)
 
 ## Results
 
