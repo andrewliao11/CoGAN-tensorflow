@@ -12,14 +12,13 @@ import pdb
 
 # if use mnist, the y denotes the number in the image
 # in generator, the z(noise) will concat with y as input
-class DCGAN(object):
+class CoGAN(object):
     def __init__(self, sess, image_size=108, is_crop=True,
                  batch_size=64, sample_size = 64, output_size=64,
                  y_dim=None, z_dim=100, gf_dim=64, df_dim=64,
                  gfc_dim=1024, dfc_dim=1024, c_dim=3, dataset_name='default',
                  checkpoint_dir=None):
         """
-
         Args:
             sess: TensorFlow session
             batch_size: The size of batch. Should be specified before training.
@@ -141,7 +140,7 @@ class DCGAN(object):
         self.saver = tf.train.Saver()
 
     def train(self, config):
-        """Train DCGAN"""
+        """Train CoGAN"""
 	# data_X is the image
         data_X1, data_y = self.load_mnist()
 	data_X2 = self.load_invert_mnist()
@@ -280,6 +279,11 @@ class DCGAN(object):
         save_images(samples2[:self.sample_size], [8, 8], img_name.replace('top', 'bot'))
         print("[Sample B] d_loss: %.8f, g_loss: %.8f" % (d2_loss, g2_loss))
 
+	# calc pixel agreemnt ratio
+	agreement = np.sum(((samples2[0,:]*255).astype(np.uint8) == (255-(samples1[0,:]*255).astype(np.uint8)))+0)
+	total = float(len(np.reshape(samples2,[-1])))
+	print '[*] Pixel Agreement Ratio = %f' % (agreement/total)
+
     def discriminator(self, image, y=None, share_params=False, reuse=False, name='D'):
 
         if '1' in name:
@@ -388,7 +392,7 @@ class DCGAN(object):
         return X/255.,y_vec
             
     def save(self, checkpoint_dir, step):
-        model_name = "DCGAN.model"
+        model_name = "CoGAN.model"
         model_dir = "%s_%s_%s" % (self.dataset_name, self.batch_size, self.output_size)
         checkpoint_dir = os.path.join(checkpoint_dir, model_dir)
 
