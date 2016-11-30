@@ -57,7 +57,7 @@ tensorboard --logdir=logs
 
 ## TODOs
 
-- Modify the network structure to get the better results
+- **Modify the network structure to get the better results**
 - Try to use in different dataset
 
 ## Reference
