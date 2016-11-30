@@ -279,11 +279,6 @@ class CoGAN(object):
         save_images(samples2[:self.sample_size], [8, 8], img_name.replace('top', 'bot'))
         print("[Sample B] d_loss: %.8f, g_loss: %.8f" % (d2_loss, g2_loss))
 
-	# calc pixel agreemnt ratio
-	agreement = np.sum(((samples2[0,:]*255).astype(np.uint8) == (255-(samples1[0,:]*255).astype(np.uint8)))+0)
-	total = float(len(np.reshape(samples2,[-1])))
-	print '[*] Pixel Agreement Ratio = %f' % (agreement/total)
-
     def discriminator(self, image, y=None, share_params=False, reuse=False, name='D'):
 
         if '1' in name:
