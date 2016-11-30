@@ -5,13 +5,13 @@ This implementation is a little bit different from the original [caffe code](htt
 ## What's CoGAN?
 CoGAN can learn a **joint distribution** with just samples drawn from the marginal distributions. This is achieved by enforcing a **weight-sharing constraint** that limits the network capacity and favors a joint distribution solution over a product of marginal distributions one.   
 The following figure is the result showed in paper:
-![](https://github.com/andrewliao11/CoGAN-tensorflow/blob/master/illustration.png?raw=true)
+![](https://github.com/andrewliao11/CoGAN-tensorflow/blob/master/asset/illustration.png?raw=true)
 
 - Note that all the natural images here is unpaired. In a nutshell, in each training process, the input of the descriminator is not aligned.
 - The experiment result of UDA problem is very impressive, which inpires me to implement this in Tensorflow.
 
 The following image is the model architecture referred in the paper:
-![](https://github.com/andrewliao11/CoGAN-tensorflow/blob/master/network.png?raw=true)   
+![](https://github.com/andrewliao11/CoGAN-tensorflow/blob/master/asset/network.png?raw=true)   
 **Again: this repo isn't follow the model architecture in the paper currently**
 
 ## Requirement
@@ -48,12 +48,12 @@ tensorboard --logdir=logs
 ## Results
 
 - model in 1st epoch   
-![](https://github.com/andrewliao11/CoGAN-tensorflow/blob/master/top_train_01_0453.png?raw=true)
-![](https://github.com/andrewliao11/CoGAN-tensorflow/blob/master/bot_train_01_0453.png?raw=true)
+![](https://github.com/andrewliao11/CoGAN-tensorflow/blob/master/asset/top_train_01_0453.png?raw=true)
+![](https://github.com/andrewliao11/CoGAN-tensorflow/blob/master/asset/bot_train_01_0453.png?raw=true)
 
 - model in 24th epoch   
-![](https://github.com/andrewliao11/CoGAN-tensorflow/blob/master/top_train_24_0495.png?raw=true)
-![](https://github.com/andrewliao11/CoGAN-tensorflow/blob/master/bot_train_24_0495.png?raw=true)
+![](https://github.com/andrewliao11/CoGAN-tensorflow/blob/master/asset/top_train_24_0495.png?raw=true)
+![](https://github.com/andrewliao11/CoGAN-tensorflow/blob/master/asset/bot_train_24_0495.png?raw=true)
 
 - ***We can see that without paired infomation, the network can generate two different images with the same high-level concepts.***   
 - ***Note: To avoid the fast convergence of D (discriminator) network, G (generator) network is updated twice for each D network update, which differs from original paper.***
