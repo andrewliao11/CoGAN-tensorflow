@@ -322,7 +322,7 @@ class CoGAN(object):
         elif '2' in name:
             branch = '2'
 
-	# layer that share the variables
+	# layer that share the variables 
         s = self.output_size
         s2, s4 = int(s/2), int(s/4) 
         # yb = tf.expand_dims(tf.expand_dims(y, 1),2)
