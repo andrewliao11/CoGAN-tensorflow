@@ -86,6 +86,11 @@ class CoGAN(object):
         self.z = tf.placeholder(tf.float32, [None, self.z_dim], name='z')
         self.z_sum = tf.histogram_summary("z", self.z)
 
+	'''
+	The share_params FLAG denotes the share weight btn two network(G, D)
+	The reuse FLAG denotes that we will use it to do the inference
+	Note: every network should be declared with (False, False) FLAG
+	'''
 	# input of the generator is the concat of z, y
         self.G1 = self.generator(self.z, self.y, share_params=False, reuse=False, name='G1')
 	self.G2 = self.generator(self.z, self.y, share_params=True, reuse=False, name='G2')
@@ -141,11 +146,13 @@ class CoGAN(object):
 
     def train(self, config):
         """Train CoGAN"""
-	# data_X is the image
+	# data_X1 is the original image
+	# data_X2 is the black-white image
+	# data_y is the label
         data_X1, data_y = self.load_mnist()
 	data_X2 = self.load_invert_mnist()
 
-	# do the random shuffle
+	# do the random shuffle for two sets -> without paired images
 	idx = np.arange(len(data_y))
 	np.random.shuffle(idx)
 	data_X1 = data_X1[idx]
@@ -286,6 +293,7 @@ class CoGAN(object):
 
     def discriminator(self, image, y=None, share_params=False, reuse=False, name='D'):
 
+	# select the corresponding batchnorm1(not shared)
         if '1' in name:
             d_bn1 = self.d1_bn1
 	    branch = '1'
@@ -293,7 +301,7 @@ class CoGAN(object):
             d_bn1 = self.d2_bn1
 	    branch = '2'
 
-       # layer that don't share variable
+        # layers that don't share variable
 	with tf.variable_scope(name):
 	    if reuse:
 		tf.get_variable_scope().reuse_variables()
@@ -312,12 +320,12 @@ class CoGAN(object):
 
     def generator(self, z, y=None, share_params=False, reuse=False, name='G'):
 
-        if '1' in name:
+	if '1' in name:
             branch = '1'
         elif '2' in name:
             branch = '2'
 
-	# layer that share the variables 
+	# layers that share the variables 
         s = self.output_size
         s2, s4 = int(s/2), int(s/4) 
 
@@ -329,7 +337,7 @@ class CoGAN(object):
         h2 = tf.nn.relu(self.g_bn2(deconv2d(h1, [self.batch_size,s2,s2,self.gf_dim * 2], 
 				name='g_h2', reuse=share_params), reuse=share_params))
 
-	# layers that do not share the variable
+	# layers that don't share the variable
 	with tf.variable_scope(name):
 	    if reuse:
 		tf.get_variable_scope().reuse_variables()
@@ -344,7 +352,7 @@ class CoGAN(object):
 	teX = np.load(os.path.join(data_dir, 't10k-images-idx3-ubyte.npy'))
 
         X = np.concatenate((trX, teX), axis=0)
-        # conver to 0~255 is more convenient
+        # convert to 0~1 is more convenient
         return X/255.
 
     def load_mnist(self):
@@ -372,12 +380,13 @@ class CoGAN(object):
         
         X = np.concatenate((trX, teX), axis=0)
         y = np.concatenate((trY, teY), axis=0)
+
 	# convert label into one-hot
         y_vec = np.zeros((len(y), self.y_dim), dtype=np.float)
         for i, label in enumerate(y):
             y_vec[i,y[i]] = 1.0
         
-	# conver to 0~255 is more convenient
+	# conver to 0~1 is more convenient
         return X/255.,y_vec
             
     def save(self, checkpoint_dir, step):
