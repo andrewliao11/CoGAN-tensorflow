@@ -246,26 +246,39 @@ class DCGAN(object):
                         time.time() - start_time, errD, errG))
 
                 if np.mod(counter, 100) == 1:
-		    # sample is the generated image
-                    samples1, d1_loss, g1_loss = self.sess.run(
-                            [self.sampler1, self.d1_loss, self.g1_loss],
-                            feed_dict={self.z: sample_z, self.images1: sample_images1, self.y:batch_labels}
-                        )
-                    save_images(samples1[:self.sample_size], [8, 8],
-                                './samples/top/train_{:02d}_{:04d}.png'.format(epoch, idx))
-                    print("[Sample T] d_loss: %.8f, g_loss: %.8f" % (d1_loss, g1_loss))
-
-                    # sample is the generated image
-                    samples2, d2_loss, g2_loss = self.sess.run(
-                            [self.sampler2, self.d2_loss, self.g2_loss],
-                            feed_dict={self.z: sample_z, self.images2: sample_images2, self.y:batch_labels}
-                        )
-                    save_images(samples2[:self.sample_size], [8, 8],
-                                './samples/bot/train_{:02d}_{:04d}.png'.format(epoch, idx))
-                    print("[Sample B] d_loss: %.8f, g_loss: %.8f" % (d2_loss, g2_loss))
+		    self.evaluate(sample_images1,sample_images2,sample_labels,batch_labels, sample_z, 
+					'./samples/bot/train_{:02d}_{:04d}.png'.format(epoch, idx))
 
                 if np.mod(counter, 500) == 2:
                     self.save(config.checkpoint_dir, counter)
+
+    def evaluate(self, sample_images1=None, sample_images2=None, sample_labels=None, 
+			batch_labels=None, sample_z=None, img_name=None):
+
+	if sample_images1==None:
+	    data_X1, data_y = self.load_mnist()
+            data_X2 = self.load_invert_mnist()
+    	    # sample noise
+            sample_z = np.random.uniform(-1, 1, size=(self.batch_size , self.z_dim))
+            sample_images1 = data_X1[0:self.batch_size]
+            sample_images2 = data_X2[0:self.batch_size]
+            sample_labels = data_y[0:self.batch_size]
+	    img_name = './evaluate/top/testing'
+
+        samples1, d1_loss, g1_loss = self.sess.run(
+                 [self.sampler1, self.d1_loss, self.g1_loss],
+                 feed_dict={self.z: sample_z, self.images1: sample_images1, self.y:batch_labels}
+             )
+        save_images(samples1[:self.sample_size], [8, 8], img_name)
+        print("[Sample T] d_loss: %.8f, g_loss: %.8f" % (d1_loss, g1_loss))
+
+        # sample is the generated image
+        samples2, d2_loss, g2_loss = self.sess.run(
+                 [self.sampler2, self.d2_loss, self.g2_loss],
+                 feed_dict={self.z: sample_z, self.images2: sample_images2, self.y:batch_labels}
+             )
+        save_images(samples2[:self.sample_size], [8, 8], img_name.replace('top', 'bot'))
+        print("[Sample B] d_loss: %.8f, g_loss: %.8f" % (d2_loss, g2_loss))
 
     def discriminator(self, image, y=None, share_params=False, reuse=False, name='D'):
 
