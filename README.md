@@ -1,11 +1,13 @@
 # CoGAN-tensorflow
 Implement Coupled Generative Adversarial Networks, [[NIPS 2016]](https://arxiv.org/abs/1606.07536)   
-This implementation is a little bit different from the original [caffe code](https://github.com/mingyuliutw/CoGAN). Basically, I follow the model design of [DCGAN](https://arxiv.org/abs/1511.06434).
+This implementation is a little bit different from the original [caffe code](https://github.com/mingyuliutw/CoGAN). Basically, I follow the model architecture design of [DCGAN](https://arxiv.org/abs/1511.06434).
 
 ## What's CoGAN?
 CoGAN can learn a **joint distribution** with just samples drawn from the marginal distributions. This is achieved by enforcing a **weight-sharing constraint** that limits the network capacity and favors a joint distribution solution over a product of marginal distributions one.   
 The following figure is the result showed in paper:
 ![](https://github.com/andrewliao11/CoGAN-tensorflow/blob/master/illustration.png?raw=true)
+
+The experiment result of UDA problem is very impressive to me, which inpires me to implement this in Tensorflow.
 
 ## Requirement
 
