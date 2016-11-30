@@ -10,6 +10,10 @@ The following figure is the result showed in paper:
 - Note that all the natural images here is unpaired. In a nutshell, in each training process, the input of the descriminator is not aligned.
 - The experiment result of UDA problem is very impressive, which inpires me to implement this in Tensorflow.
 
+The following image is the model architecture referred in the paper:
+![](https://github.com/andrewliao11/CoGAN-tensorflow/blob/master/network.png?raw=true)   
+**Again: this repo isn't follow the model architecture in the paper currently**
+
 ## Requirement
 
 - Python 2.7
