@@ -246,7 +246,7 @@ class CoGAN(object):
 
                 if np.mod(counter, 100) == 1:
 		    self.evaluate(sample_images1,sample_images2,sample_labels,batch_labels, sample_z, 
-					'./samples/bot/train_{:02d}_{:04d}.png'.format(epoch, idx))
+					'./samples/top/train_{:02d}_{:04d}.png'.format(epoch, idx))
 
                 if np.mod(counter, 500) == 2:
                     self.save(config.checkpoint_dir, counter)
