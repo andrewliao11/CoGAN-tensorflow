@@ -8,6 +8,8 @@ from six.moves import xrange
 
 from ops import *
 from utils import *
+from tqdm import tqdm
+import cv2
 import pdb
 
 # if use mnist, the y denotes the number in the image
@@ -146,21 +148,33 @@ class CoGAN(object):
 
     def train(self, config):
         """Train CoGAN"""
-	# data_X1 is the original image
-	# data_X2 is the black-white image
-	# data_y is the label
-        data_X1, data_y = self.load_mnist()
-	data_X2 = self.load_invert_mnist()
 
-	# do the random shuffle for two sets -> without paired images
-	idx = np.arange(len(data_y))
-	np.random.shuffle(idx)
-	data_X1 = data_X1[idx]
-	data_y1 = data_y[idx]
-	idx = np.arange(len(data_y))
-	np.random.shuffle(idx)
-	data_X2 = data_X2[idx]
-	data_y2 = data_y[idx]
+	if self.dataset == 'mnist':
+   	    # data_X1 is the original image
+	    # data_X2 is the black-white image
+	    # data_y is the label
+            data_X1, data_y = self.load_mnist()
+	    data_X2 = self.load_invert_mnist()
+
+	    # do the random shuffle for two sets -> without paired images
+	    idx = np.arange(len(data_y))
+	    np.random.shuffle(idx)
+	    data_X1 = data_X1[idx]
+	    data_y1 = data_y[idx]
+	    idx = np.arange(len(data_y))
+	    np.random.shuffle(idx)
+	    data_X2 = data_X2[idx]
+	    data_y2 = data_y[idx]
+	elif self.dataset == 'celeba':
+	    # w_attr is the image with specific attr
+	    # wo_attr is the image without specific attr
+	    w_attr, wo_attr = self.load_celeba()
+	    idx = np.arange(len(w_attr))
+            np.random.shuffle(idx)
+	    w_attr = w_attr[idx]
+            idx = np.arange(len(wo_attr))
+            np.random.shuffle(idx)
+            wo_attr = wo_attr[idx]
 
 	# branch 1
         d1_optim = tf.train.AdamOptimizer(config.learning_rate, beta1=config.beta1) \
@@ -186,11 +200,17 @@ class CoGAN(object):
 
 	# sample noise
         sample_z = np.random.uniform(-1, 1, size=(self.batch_size , self.z_dim))
-        sample_images1 = data_X1[0:self.batch_size]
-	sample_images2 = data_X2[0:self.batch_size]
-        sample_labels1 = data_y1[0:self.batch_size]
-        sample_labels2 = data_y2[0:self.batch_size]
-            
+	if self.dataset == 'mnist':
+            sample_images1 = data_X1[0:self.batch_size]
+   	    sample_images2 = data_X2[0:self.batch_size]
+            sample_labels1 = data_y1[0:self.batch_size]
+            sample_labels2 = data_y2[0:self.batch_size]
+        elif self.dataset == 'celeba':
+            sample_images1 = w_attr[0:self.batch_size]
+            sample_images2 = wo_attr[0:self.batch_size]
+            sample_labels1 = w_attr[0:self.batch_size]
+            sample_labels2 = wo_attr[0:self.batch_size]
+
         counter = 1
         start_time = time.time()
 
@@ -200,8 +220,10 @@ class CoGAN(object):
             print(" [!] Load failed...")
 
         for epoch in xrange(config.epoch):
-            batch_idxs = min(len(data_X1), config.train_size) // config.batch_size
-
+	    if self.dataset == 'mnist':
+                batch_idxs = min(len(data_X1), config.train_size) // config.batch_size
+	    elif self.dataset == 'celeba':
+		batch_idxs = min(len(w_attr), len(wo_attr), config.train_size) // config.batch_size
             for idx in xrange(0, batch_idxs):
                 batch_images1 = data_X1[idx*config.batch_size:(idx+1)*config.batch_size]
 		batch_images2 = data_X2[idx*config.batch_size:(idx+1)*config.batch_size]
@@ -275,7 +297,7 @@ class CoGAN(object):
             sample_images2 = data_X2[0:self.batch_size]
             sample_labels = data_y[0:self.batch_size]
 	    img_name = './evaluate/top/testing'
-
+	pdb.set_trace()
         samples1, d1_loss, g1_loss = self.sess.run(
                  [self.sampler1, self.d1_loss, self.g1_loss],
                  feed_dict={self.z: sample_z, self.images1: sample_images1, self.y:batch_labels1}
@@ -344,6 +366,24 @@ class CoGAN(object):
  	    output = tf.nn.sigmoid(deconv2d(h2, [self.batch_size, s, s, self.c_dim], name='g'+branch+'_h3', reuse=False))
 
         return output
+
+    def laod_celebA(self):
+
+	data_dir = os.path.join(os.path.join("./data", self.dataset_name))
+	split = np.load('split_img.npz')
+	w_attr_name = split['w_attr']
+	wo_attr_name = split['wo_attr']
+	w_attr = []
+	wo_attr = []
+	# load all the image to RAM 
+	for name in tqdm(w_attr_name[:len(wo_attr_name)]):
+	    img = cv2.resize(cv2.imread(os.path.join(data_dir, name), (128,128))) 
+	    w_attr.append(img)
+        for name in tqdm(wo_attr_name):
+            img = cv2.resize(cv2.imread(os.path.join(data_dir, name), (128,128)))
+            wo_attr.append(img)
+	
+	return w_attr, wo_attr
 
     def load_invert_mnist(self):
 	data_dir = os.path.join(os.path.join("./data", self.dataset_name, 'invert'))
