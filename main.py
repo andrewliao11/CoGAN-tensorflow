@@ -32,19 +32,23 @@ def main(_):
     if not os.path.exists(FLAGS.sample_dir):
         os.makedirs(FLAGS.sample_dir)
 
-    with tf.Session() as sess:
-        if FLAGS.dataset == 'mnist':
-            dcgan = CoGAN(sess, image_size=FLAGS.image_size, batch_size=FLAGS.batch_size, y_dim=10, output_size=28, c_dim=1,
+    config = tf.ConfigProto()
+    config.gpu_options.per_process_gpu_memory_fraction = 1/10
+    config.gpu_options.allow_growth = True
+
+    sess = tf.Session(config=config)
+    if FLAGS.dataset == 'mnist':
+        dcgan = CoGAN(sess, image_size=FLAGS.image_size, batch_size=FLAGS.batch_size, y_dim=10, output_size=28, c_dim=1,
                     dataset_name=FLAGS.dataset, is_crop=FLAGS.is_crop, checkpoint_dir=FLAGS.checkpoint_dir)
-        else:
-            dcgan = CoGAN(sess, image_size=FLAGS.image_size, batch_size=FLAGS.batch_size, output_size=FLAGS.output_size, 
+    else:
+        dcgan = CoGAN(sess, image_size=FLAGS.image_size, batch_size=FLAGS.batch_size, output_size=FLAGS.output_size, 
 		c_dim=FLAGS.c_dim,dataset_name=FLAGS.dataset, is_crop=FLAGS.is_crop, checkpoint_dir=FLAGS.checkpoint_dir)
 
-        if FLAGS.is_train:
-            dcgan.train(FLAGS)
-        else:
-            dcgan.load(FLAGS.checkpoint_dir)
-	    dcgan.evaluate()
+    if FLAGS.is_train:
+        dcgan.train(FLAGS)
+    else:
+        dcgan.load(FLAGS.checkpoint_dir)
+        dcgan.evaluate()
 
 
 if __name__ == '__main__':
