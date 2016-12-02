@@ -31,7 +31,11 @@ def main(_):
     if not os.path.exists(FLAGS.sample_dir):
         os.makedirs(FLAGS.sample_dir)
 
-    with tf.Session() as sess:
+    config = tf.ConfigProto()
+    config.gpu_options.per_process_gpu_memory_fraction = 1/10
+    config.gpu_options.allow_growth = True
+
+    with tf.Session(config) as sess:
         if FLAGS.dataset == 'mnist':
             dcgan = CoGAN(sess, image_size=28, batch_size=FLAGS.batch_size, y_dim=10, output_size=28, c_dim=1,
                     dataset_name=FLAGS.dataset, is_crop=FLAGS.is_crop, checkpoint_dir=FLAGS.checkpoint_dir)
