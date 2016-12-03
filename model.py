@@ -84,6 +84,8 @@ class CoGAN(object):
 	# Generative model input
         if self.y_dim:
             self.y= tf.placeholder(tf.float32, [self.batch_size, self.y_dim], name='y')
+	else:
+	    self.y = None
 	# latent variable
         self.z = tf.placeholder(tf.float32, [None, self.z_dim], name='z')
         self.z_sum = tf.histogram_summary("z", self.z)
@@ -149,7 +151,7 @@ class CoGAN(object):
     def train(self, config):
         """Train CoGAN"""
 
-	if self.dataset == 'mnist':
+	if self.dataset_name == 'mnist':
    	    # data_X1 is the original image
 	    # data_X2 is the black-white image
 	    # data_y is the label
@@ -165,16 +167,16 @@ class CoGAN(object):
 	    np.random.shuffle(idx)
 	    data_X2 = data_X2[idx]
 	    data_y2 = data_y[idx]
-	elif self.dataset == 'celeba':
+	elif self.dataset_name == 'celeba':
 	    # w_attr is the image with specific attr
 	    # wo_attr is the image without specific attr
-	    w_attr, wo_attr = self.load_celeba()
-	    idx = np.arange(len(w_attr))
+	    dataX1, dataX2 = self.load_celebA()
+	    idx = np.arange(len(dataX1))
             np.random.shuffle(idx)
-	    w_attr = w_attr[idx]
-            idx = np.arange(len(wo_attr))
+	    dataX1 = dataX1[idx]
+            idx = np.arange(len(dataX2))
             np.random.shuffle(idx)
-            wo_attr = wo_attr[idx]
+            dataX2 = dataX2[idx]
 
 	# branch 1
         d1_optim = tf.train.AdamOptimizer(config.learning_rate, beta1=config.beta1) \
@@ -200,16 +202,8 @@ class CoGAN(object):
 
 	# sample noise
         sample_z = np.random.uniform(-1, 1, size=(self.batch_size , self.z_dim))
-	if self.dataset == 'mnist':
-            sample_images1 = data_X1[0:self.batch_size]
-   	    sample_images2 = data_X2[0:self.batch_size]
-            sample_labels1 = data_y1[0:self.batch_size]
-            sample_labels2 = data_y2[0:self.batch_size]
-        elif self.dataset == 'celeba':
-            sample_images1 = w_attr[0:self.batch_size]
-            sample_images2 = wo_attr[0:self.batch_size]
-            sample_labels1 = w_attr[0:self.batch_size]
-            sample_labels2 = wo_attr[0:self.batch_size]
+        sample_images1 = data_X1[0:self.batch_size]
+   	sample_images2 = data_X2[0:self.batch_size]
 
         counter = 1
         start_time = time.time()
@@ -220,10 +214,11 @@ class CoGAN(object):
             print(" [!] Load failed...")
 
         for epoch in xrange(config.epoch):
-	    if self.dataset == 'mnist':
+	    if self.dataset_name == 'mnist':
                 batch_idxs = min(len(data_X1), config.train_size) // config.batch_size
-	    elif self.dataset == 'celeba':
+	    elif self.dataset_name == 'celeba':
 		batch_idxs = min(len(w_attr), len(wo_attr), config.train_size) // config.batch_size
+	    pdb.set_trace()
             for idx in xrange(0, batch_idxs):
                 batch_images1 = data_X1[idx*config.batch_size:(idx+1)*config.batch_size]
 		batch_images2 = data_X2[idx*config.batch_size:(idx+1)*config.batch_size]
@@ -367,23 +362,23 @@ class CoGAN(object):
 
         return output
 
-    def laod_celebA(self):
+    def load_celebA(self):
 
 	data_dir = os.path.join(os.path.join("./data", self.dataset_name))
-	split = np.load('split_img.npz')
+	split = np.load(os.path.join(data_dir, 'split_img.npz'))
 	w_attr_name = split['w_attr']
 	wo_attr_name = split['wo_attr']
 	w_attr = []
 	wo_attr = []
 	# load all the image to RAM 
-	for name in tqdm(w_attr_name[:len(wo_attr_name)]):
-	    img = cv2.resize(cv2.imread(os.path.join(data_dir, name), (128,128))) 
+	for name in tqdm(w_attr_name):
+	    img = cv2.resize(cv2.imread(os.path.join(data_dir, 'img_align_celeba', name)), (128,128)).astype(np.float) 
 	    w_attr.append(img)
-        for name in tqdm(wo_attr_name):
-            img = cv2.resize(cv2.imread(os.path.join(data_dir, name), (128,128)))
+        for name in tqdm(wo_attr_name[:len(w_attr_name)]):
+            img = cv2.resize(cv2.imread(os.path.join(data_dir, 'img_align_celeba', name)), (128,128)).astype(np.float)
             wo_attr.append(img)
 	
-	return w_attr, wo_attr
+	return np.asarray(w_attr), np.asarray(wo_attr)
 
     def load_invert_mnist(self):
 	data_dir = os.path.join(os.path.join("./data", self.dataset_name, 'invert'))
