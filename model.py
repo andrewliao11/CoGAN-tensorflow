@@ -170,13 +170,13 @@ class CoGAN(object):
 	elif self.dataset_name == 'celeba':
 	    # w_attr is the image with specific attr
 	    # wo_attr is the image without specific attr
-	    dataX1, dataX2 = self.load_celebA()
-	    idx = np.arange(len(dataX1))
+	    data_X1, data_X2 = self.load_celebA()
+	    idx = np.arange(len(data_X1))
             np.random.shuffle(idx)
-	    dataX1 = dataX1[idx]
-            idx = np.arange(len(dataX2))
+	    data_X1 = data_X1[idx]
+            idx = np.arange(len(data_X2))
             np.random.shuffle(idx)
-            dataX2 = dataX2[idx]
+            data_X2 = data_X2[idx]
 
 	# branch 1
         d1_optim = tf.train.AdamOptimizer(config.learning_rate, beta1=config.beta1) \
@@ -214,57 +214,51 @@ class CoGAN(object):
             print(" [!] Load failed...")
 
         for epoch in xrange(config.epoch):
-	    if self.dataset_name == 'mnist':
-                batch_idxs = min(len(data_X1), config.train_size) // config.batch_size
-	    elif self.dataset_name == 'celeba':
-		batch_idxs = min(len(w_attr), len(wo_attr), config.train_size) // config.batch_size
-	    pdb.set_trace()
+            batch_idxs = min(len(data_X1), len(data_X2), config.train_size) // config.batch_size
             for idx in xrange(0, batch_idxs):
                 batch_images1 = data_X1[idx*config.batch_size:(idx+1)*config.batch_size]
 		batch_images2 = data_X2[idx*config.batch_size:(idx+1)*config.batch_size]
-                batch_labels1 = data_y1[idx*config.batch_size:(idx+1)*config.batch_size]
-		batch_labels2 = data_y2[idx*config.batch_size:(idx+1)*config.batch_size]
 		# z is the noise
                 batch_z = np.random.uniform(-1, 1, [config.batch_size, self.z_dim]) \
                             .astype(np.float32)
 		# ----------- Branch 1 ----------
                 # Update D network
                 _, summary_str = self.sess.run([d1_optim, self.d1_sum],
-                        feed_dict={ self.images1: batch_images1, self.z: batch_z, self.y:batch_labels1 })
+                        feed_dict={ self.images1: batch_images1, self.z: batch_z })
                 self.writer.add_summary(summary_str, counter)
 
                 # Update G network
                 _, summary_str = self.sess.run([g1_optim, self.g1_sum],
-                        feed_dict={ self.z: batch_z, self.y:batch_labels1 })
+                        feed_dict={ self.z: batch_z })
                 self.writer.add_summary(summary_str, counter)
 
                 # Run g_optim twice to make sure that d_loss does not go to zero (different from paper)
                 _, summary_str = self.sess.run([g1_optim, self.g1_sum],
-                        feed_dict={ self.z: batch_z, self.y:batch_labels1 })
+                        feed_dict={ self.z: batch_z })
                 self.writer.add_summary(summary_str, counter)
                     
-                errD1_fake = self.d1_loss_fake.eval({self.z: batch_z, self.y:batch_labels1})
-                errD1_real = self.d1_loss_real.eval({self.images1: batch_images1, self.y:batch_labels1})
-                errG1 = self.g1_loss.eval({self.z: batch_z, self.y:batch_labels1})
+                errD1_fake = self.d1_loss_fake.eval({self.z: batch_z })
+                errD1_real = self.d1_loss_real.eval({self.images1: batch_images1 })
+                errG1 = self.g1_loss.eval({self.z: batch_z })
                 # ----------- Branch 2 ----------
                 # Update D network
                 _, summary_str = self.sess.run([d2_optim, self.d2_sum],
-                        feed_dict={ self.images2: batch_images2, self.z: batch_z, self.y:batch_labels2 })
+                        feed_dict={ self.images2: batch_images2, self.z: batch_z })
                 self.writer.add_summary(summary_str, counter)
 
                 # Update G network
                 _, summary_str = self.sess.run([g2_optim, self.g2_sum],
-                        feed_dict={ self.z: batch_z, self.y:batch_labels2 })
+                        feed_dict={ self.z: batch_z })
                 self.writer.add_summary(summary_str, counter)
                     
                 # Run g_optim twice to make sure that d_loss does not go to zero (different from paper)
                 _, summary_str = self.sess.run([g2_optim, self.g2_sum],
-                        feed_dict={ self.z: batch_z, self.y:batch_labels2 })
+                        feed_dict={ self.z: batch_z })
                 self.writer.add_summary(summary_str, counter)
  
-                errD2_fake = self.d2_loss_fake.eval({self.z: batch_z, self.y:batch_labels2})
-                errD2_real = self.d2_loss_real.eval({self.images2: batch_images2, self.y:batch_labels2})
-                errG2 = self.g2_loss.eval({self.z: batch_z, self.y:batch_labels2})
+                errD2_fake = self.d2_loss_fake.eval({self.z: batch_z })
+                errD2_real = self.d2_loss_real.eval({self.images2: batch_images2 })
+                errG2 = self.g2_loss.eval({self.z: batch_z })
 
 		errD = errD1_fake+errD1_real+errD2_fake+errD2_real
 		errG = errG1+errG2
@@ -274,14 +268,13 @@ class CoGAN(object):
                         time.time() - start_time, errD, errG))
 
                 if np.mod(counter, 100) == 1:
-		    self.evaluate(sample_images1,sample_images2,sample_labels1,batch_labels1,sample_labels2,batch_labels2, 
-				sample_z, './samples/top/train_{:02d}_{:04d}.png'.format(epoch, idx))
+		    self.evaluate(sample_images1,sample_images2, sample_z, 
+					'./samples/top/train_{:02d}_{:04d}.png'.format(epoch, idx))
 
                 if np.mod(counter, 500) == 2:
                     self.save(config.checkpoint_dir, counter)
 
-    def evaluate(self, sample_images1=None, sample_images2=None, sample_labels1=None,batch_labels1=None, 
-			sample_labels2=None,batch_labels2=None, sample_z=None, img_name=None):
+    def evaluate(self, sample_images1=None, sample_images2=None, sample_z=None, img_name=None):
 
 	if sample_images1==None:
 	    data_X1, data_y = self.load_mnist()
@@ -290,12 +283,11 @@ class CoGAN(object):
             sample_z = np.random.uniform(-1, 1, size=(self.batch_size , self.z_dim))
             sample_images1 = data_X1[0:self.batch_size]
             sample_images2 = data_X2[0:self.batch_size]
-            sample_labels = data_y[0:self.batch_size]
 	    img_name = './evaluate/top/testing'
-	pdb.set_trace()
+
         samples1, d1_loss, g1_loss = self.sess.run(
                  [self.sampler1, self.d1_loss, self.g1_loss],
-                 feed_dict={self.z: sample_z, self.images1: sample_images1, self.y:batch_labels1}
+                 feed_dict={self.z: sample_z, self.images1: sample_images1 }
              )
         save_images(samples1[:self.sample_size], [8, 8], img_name)
         print("[Sample T] d_loss: %.8f, g_loss: %.8f" % (d1_loss, g1_loss))
@@ -303,7 +295,7 @@ class CoGAN(object):
         # sample is the generated image
         samples2, d2_loss, g2_loss = self.sess.run(
                  [self.sampler2, self.d2_loss, self.g2_loss],
-                 feed_dict={self.z: sample_z, self.images2: sample_images2, self.y:batch_labels2}
+                 feed_dict={self.z: sample_z, self.images2: sample_images2 }
              )
         save_images(samples2[:self.sample_size], [8, 8], img_name.replace('top', 'bot'))
         print("[Sample B] d_loss: %.8f, g_loss: %.8f" % (d2_loss, g2_loss))
