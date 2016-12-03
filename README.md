@@ -47,6 +47,10 @@ tensorboard --logdir=logs
 
 ## Results
 
+Model architecture:   
+G: Linear(100->1024),BN,Relu -> Linear(1024->7x7x128),BN,Relu -> Reshape(7,7,128) -> FCONV(128,K5x5,S2x2),BN,Relu -> FCONV(3,K5x5,S2x2) -> Sigmoid   
+D: CONV(3,K5x5,S2x2),Leaky-Relu -> CONV(64,K5x5,S2x2),BN,Leaky-Relu -> Reshape(-1) -> Linear(->1024),BN,Leaky-Relu -> Linear(->1)
+
 - model in 1st epoch   
 ![](https://github.com/andrewliao11/CoGAN-tensorflow/blob/master/asset/top_train_01_0453.png?raw=true)
 ![](https://github.com/andrewliao11/CoGAN-tensorflow/blob/master/asset/bot_train_01_0453.png?raw=true)
@@ -68,3 +72,4 @@ tensorboard --logdir=logs
 This code is heavily built on these repo:   
 - [DCGAN-tensorflow](https://github.com/carpedm20/DCGAN-tensorflow) from @carpedm20 
 - [CoGAN](https://github.com/mingyuliutw/CoGAN) from @mingyuliutw
+
