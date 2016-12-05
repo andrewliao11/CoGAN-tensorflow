@@ -151,22 +151,8 @@ class CoGAN(object):
     def train(self, config):
         """Train CoGAN"""
 
-   	# data_X1 is the original image
-	# data_X2 is the black-white image
-	# data_y is the label
-        data_X1, data_y = self.load_mnist()
-	data_X2 = self.load_invert_mnist()
-
-	# do the random shuffle for two sets -> without paired images
-	idx = np.arange(len(data_y))
-	np.random.shuffle(idx)
-	data_X1 = data_X1[idx]
-	data_y1 = data_y[idx]
-	idx = np.arange(len(data_y))
-	np.random.shuffle(idx)
-	data_X2 = data_X2[idx]
-	data_y2 = data_y[idx]
-
+	dataset = celebA(self.batch_size, self.sample_size, self.is_crop, self.image_size,self.output_size)
+	data_X1, data_X2 = dataset.get_list()
 	# branch 1
         d1_optim = tf.train.AdamOptimizer(config.learning_rate, beta1=config.beta1) \
                           .minimize(self.d1_loss, var_list=self.d1_vars)
@@ -191,8 +177,11 @@ class CoGAN(object):
 
 	# sample noise
         sample_z = np.random.uniform(-1, 1, size=(self.batch_size , self.z_dim))
-        sample_images1 = data_X1[0:self.batch_size]
-   	sample_images2 = data_X2[0:self.batch_size]
+	sample_files = data_X1[0:self.sample_size]
+	sample_images1 = [get_image(os.path.join('./data/celeba/img_align_celeba', sample_file), self.image_size, 
+		is_crop=self.is_crop, resize_w=self.output_size) for sample_file in sample_files]
+	sample_files = data_X2[0:self.sample_size]
+        sample_images2 = [get_image(os.path.join('./data/celeba/img_align_celeba', sample_file), self.image_size,                              is_crop=self.is_crop, resize_w=self.output_size) for sample_file in sample_files]
 
         counter = 1
         start_time = time.time()
@@ -205,8 +194,13 @@ class CoGAN(object):
         for epoch in xrange(config.epoch):
             batch_idxs = min(len(data_X1), len(data_X2), config.train_size) // config.batch_size
             for idx in xrange(0, batch_idxs):
-                batch_images1 = data_X1[idx*config.batch_size:(idx+1)*config.batch_size]
-		batch_images2 = data_X2[idx*config.batch_size:(idx+1)*config.batch_size]
+		batch_images1, batch_images2 = dataset.sequential_sample()
+		'''
+		batch_images1 = [get_image(os.path.join('./data/celeba/img_align_celeba', sample_file), self.image_size,
+                	is_crop=self.is_crop, resize_w=self.output_size) for sample_file in top]
+		batch_images2 = [get_image(os.path.join('./data/celeba/img_align_celeba', sample_file), self.image_size,
+   	             	is_crop=self.is_crop, resize_w=self.output_size) for sample_file in bot]
+		'''
 		# z is the noise
                 batch_z = np.random.uniform(-1, 1, [config.batch_size, self.z_dim]) \
                             .astype(np.float32)
@@ -345,50 +339,6 @@ class CoGAN(object):
 
         return output
 
-    def load_invert_mnist(self):
-	data_dir = os.path.join(os.path.join("./data", self.dataset_name, 'invert'))
-
-	trX = np.load(os.path.join(data_dir, 'train-images-idx3-ubyte.npy'))
-	teX = np.load(os.path.join(data_dir, 't10k-images-idx3-ubyte.npy'))
-
-        X = np.concatenate((trX, teX), axis=0)
-        # convert to 0~1 is more convenient
-        return X/255.
-
-    def load_mnist(self):
-
-        data_dir = os.path.join("./data", self.dataset_name)
-        
-        fd = open(os.path.join(data_dir,'train-images-idx3-ubyte'))
-        loaded = np.fromfile(file=fd,dtype=np.uint8)
-        trX = loaded[16:].reshape((60000,28,28,1)).astype(np.float)
-
-        fd = open(os.path.join(data_dir,'train-labels-idx1-ubyte'))
-        loaded = np.fromfile(file=fd,dtype=np.uint8)
-        trY = loaded[8:].reshape((60000)).astype(np.float)
-
-        fd = open(os.path.join(data_dir,'t10k-images-idx3-ubyte'))
-        loaded = np.fromfile(file=fd,dtype=np.uint8)
-        teX = loaded[16:].reshape((10000,28,28,1)).astype(np.float)
-
-        fd = open(os.path.join(data_dir,'t10k-labels-idx1-ubyte'))
-        loaded = np.fromfile(file=fd,dtype=np.uint8)
-        teY = loaded[8:].reshape((10000)).astype(np.float)
-
-        trY = np.asarray(trY)
-        teY = np.asarray(teY)
-        
-        X = np.concatenate((trX, teX), axis=0)
-        y = np.concatenate((trY, teY), axis=0)
-
-	# convert label into one-hot
-        y_vec = np.zeros((len(y), self.y_dim), dtype=np.float)
-        for i, label in enumerate(y):
-            y_vec[i,y[i]] = 1.0
-        
-	# conver to 0~1 is more convenient
-        return X/255.,y_vec
-            
     def save(self, checkpoint_dir, step):
         model_name = "CoGAN.model"
         model_dir = "%s_%s_%s" % (self.dataset_name, self.batch_size, self.output_size)

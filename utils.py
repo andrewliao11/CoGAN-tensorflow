@@ -6,13 +6,63 @@ import math
 import json
 import random
 import pprint
+import os
 import scipy.misc
 import numpy as np
+from tqdm import tqdm
 from time import gmtime, strftime
+import pdb
 
 pp = pprint.PrettyPrinter()
 
 get_stddev = lambda x, k_h, k_w: 1/math.sqrt(k_w*k_h*x.get_shape()[-1])
+
+class celebA():
+
+    def __init__(self, batch_size, sample_size, is_crop, image_size, resize_w):
+
+	self.batch_size = batch_size
+	self.sample_size = sample_size
+        self.data_dir = os.path.join(os.path.join("./data", 'celeba'))
+        split = np.load(os.path.join(self.data_dir, 'split_img.npz'))
+        w_attr_name = split['w_attr']
+    	wo_attr_name = split['wo_attr']
+
+	i = len(w_attr_name) // self.batch_size
+	self.w_attr = w_attr_name[:i*self.batch_size]
+        i = len(wo_attr_name) // self.batch_size
+        self.wo_attr = wo_attr_name[:i*self.batch_size]
+
+	self.w_attr_imgs = [get_image(os.path.join('./data/celeba/img_align_celeba', sample_file), image_size,
+                        is_crop=is_crop, resize_w=resize_w) for sample_file in tqdm(self.w_attr)]
+	self.wo_attr_imgs = [get_image(os.path.join('./data/celeba/img_align_celeba', sample_file), image_size,
+                        is_crop=is_crop, resize_w=resize_w) for sample_file in tqdm(self.wo_attr)]
+
+	self.top_number = len(self.w_attr)
+	self.bot_number = len(self.wo_attr)
+	self.top_current = 0
+	self.bot_current = 0
+
+    def get_list(self):
+	return self.w_attr, self.wo_attr
+
+    def sequential_sample(self):
+
+	top_end = (self.top_current+self.batch_size)%self.top_number
+	bot_end = (self.bot_current+self.batch_size)%self.bot_number
+	if top_end == 0:
+	    top = self.w_attr[self.top_current:]
+	else:
+    	    top = self.w_attr[self.top_current:(self.top_current+self.batch_size)%self.top_number]
+	if bot_end == 0:
+	    bot = self.wo_attr[self.bot_current:]
+	else:
+            bot = self.wo_attr[self.bot_current:(self.bot_current+self.batch_size)%self.bot_number]
+
+	self.top_current = top_end
+	self.bot_current = bot_end
+
+	return self.w_attr_imgs[top], self.wo_attr_imgs[bot]
 
 def get_image(image_path, image_size, is_crop=True, resize_w=64, is_grayscale = False):
     return transform(imread(image_path, is_grayscale), image_size, is_crop, resize_w)
@@ -57,11 +107,12 @@ def transform(image, npx=64, is_crop=True, resize_w=64):
         cropped_image = center_crop(image, npx, resize_w=resize_w)
     else:
         cropped_image = image
+    # resize the image
+    cropped_image = scipy.misc.imresize(cropped_image, (resize_w,resize_w))
     return np.array(cropped_image)/127.5 - 1.
 
 def inverse_transform(images):
     return (images+1.)/2.
-
 
 def to_json(output_path, *layers):
     with open(output_path, "w") as layer_f:

@@ -2,7 +2,6 @@ import os
 import scipy.misc
 import numpy as np
 
-from model import CoGAN
 from utils import pp, visualize, to_json
 
 import tensorflow as tf
@@ -37,9 +36,11 @@ def main(_):
 
     with tf.Session(config=config) as sess:
         if FLAGS.dataset == 'mnist':
+	    from model import CoGAN
             dcgan = CoGAN(sess, image_size=28, batch_size=FLAGS.batch_size, y_dim=10, output_size=28, c_dim=1,
                     dataset_name=FLAGS.dataset, is_crop=FLAGS.is_crop, checkpoint_dir=FLAGS.checkpoint_dir)
         else:
+	    from model_celebA import CoGAN
             dcgan = CoGAN(sess, image_size=128, batch_size=FLAGS.batch_size, output_size=128, c_dim=FLAGS.c_dim,
 		    dataset_name=FLAGS.dataset, is_crop=FLAGS.is_crop, checkpoint_dir=FLAGS.checkpoint_dir)
 
