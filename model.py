@@ -134,6 +134,11 @@ class CoGAN(object):
         self.g2_loss_sum = tf.scalar_summary("g2_loss", self.g2_loss)
         self.d2_loss_sum = tf.scalar_summary("d2_loss", self.d2_loss)
 
+	# sum together
+	self.d_loss = self.d1_loss+self.d2_loss
+	self.g_loss = self.g1_loss+self.g2_loss
+	self.g_loss_sum = tf.scalar_summary("g_loss", self.g_loss)
+        self.d_loss_sum = tf.scalar_summary("d_loss", self.d_loss)
 	# all variable
         t_vars = tf.trainable_variables()
 	# variable list
@@ -141,6 +146,11 @@ class CoGAN(object):
         self.g1_vars = [var for var in t_vars if 'g1_' in var.name] + [var for var in t_vars if 'g_' in var.name]
         self.d2_vars = [var for var in t_vars if 'd2_' in var.name] + [var for var in t_vars if 'd_' in var.name]
         self.g2_vars = [var for var in t_vars if 'g2_' in var.name] + [var for var in t_vars if 'g_' in var.name]
+
+	self.g_vars = [var for var in t_vars if 'g1_' in var.name] + [var for var in t_vars if 'g2_' in var.name] \
+				+ [var for var in t_vars if 'g_' in var.name]
+	self.d_vars = [var for var in t_vars if 'd1_' in var.name] + [var for var in t_vars if 'd2_' in var.name] \
+				+ [var for var in t_vars if 'd_' in var.name]
 
         self.saver = tf.train.Saver()
 
@@ -162,6 +172,7 @@ class CoGAN(object):
 	data_X2 = data_X2[idx]
 	data_y2 = data_y[idx]
 
+	'''
 	# branch 1
         d1_optim = tf.train.AdamOptimizer(config.learning_rate, beta1=config.beta1) \
                           .minimize(self.d1_loss, var_list=self.d1_vars)
@@ -172,6 +183,11 @@ class CoGAN(object):
                           .minimize(self.d2_loss, var_list=self.d2_vars)
         g2_optim = tf.train.AdamOptimizer(config.learning_rate, beta1=config.beta1) \
                           .minimize(self.g2_loss, var_list=self.g2_vars)
+	'''
+	d_optim = tf.train.AdamOptimizer(config.learning_rate, beta1=config.beta1) \
+                          .minimize(self.d_loss, var_list=self.d_vars)
+        g_optim = tf.train.AdamOptimizer(config.learning_rate, beta1=config.beta1) \
+                          .minimize(self.g_loss, var_list=self.g_vars)
 
         tf.initialize_all_variables().run()
 
@@ -208,8 +224,24 @@ class CoGAN(object):
                 batch_labels1 = data_y1[idx*config.batch_size:(idx+1)*config.batch_size]
 		batch_labels2 = data_y2[idx*config.batch_size:(idx+1)*config.batch_size]
 		# z is the noise
-                batch_z = np.random.uniform(-1, 1, [config.batch_size, self.z_dim]) \
-                            .astype(np.float32)
+                batch_z = np.random.uniform(-1, 1, [config.batch_size, self.z_dim]).astype(np.float32)
+		# Update D network
+                _, summary_str = self.sess.run([d_optim, self.d1_sum],
+                        feed_dict={ self.images1: batch_images1, self.images2: batch_images2, 
+					self.z: batch_z})
+                self.writer.add_summary(summary_str, counter)
+
+                # Update G network
+                _, summary_str = self.sess.run([g_optim, self.g1_sum],
+                        feed_dict={ self.z: batch_z})
+                self.writer.add_summary(summary_str, counter)
+
+                # Run g_optim twice to make sure that d_loss does not go to zero (different from paper)
+                _, summary_str = self.sess.run([g_optim, self.g1_sum],
+                        feed_dict={ self.z: batch_z})
+                self.writer.add_summary(summary_str, counter)
+
+		'''
 		# ----------- Branch 1 ----------
                 # Update D network
                 _, summary_str = self.sess.run([d1_optim, self.d1_sum],
@@ -225,7 +257,6 @@ class CoGAN(object):
                 _, summary_str = self.sess.run([g1_optim, self.g1_sum],
                         feed_dict={ self.z: batch_z, self.y:batch_labels1 })
                 self.writer.add_summary(summary_str, counter)
-                    
                 errD1_fake = self.d1_loss_fake.eval({self.z: batch_z, self.y:batch_labels1})
                 errD1_real = self.d1_loss_real.eval({self.images1: batch_images1, self.y:batch_labels1})
                 errG1 = self.g1_loss.eval({self.z: batch_z, self.y:batch_labels1})
@@ -244,13 +275,16 @@ class CoGAN(object):
                 _, summary_str = self.sess.run([g2_optim, self.g2_sum],
                         feed_dict={ self.z: batch_z, self.y:batch_labels2 })
                 self.writer.add_summary(summary_str, counter)
- 
+ 		
                 errD2_fake = self.d2_loss_fake.eval({self.z: batch_z, self.y:batch_labels2})
                 errD2_real = self.d2_loss_real.eval({self.images2: batch_images2, self.y:batch_labels2})
                 errG2 = self.g2_loss.eval({self.z: batch_z, self.y:batch_labels2})
-
+		
 		errD = errD1_fake+errD1_real+errD2_fake+errD2_real
 		errG = errG1+errG2
+		'''
+		errD = self.d_loss.eval({self.z: batch_z, self.images1: batch_images1, self.images2: batch_images2})
+		errG = self.g_loss.eval({self.z: batch_z})
                 counter += 1
                 print("Epoch: [%2d] [%4d/%4d] time: %4.4f, d_loss: %.8f, g_loss: %.8f" \
                     % (epoch, idx, batch_idxs,
