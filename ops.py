@@ -89,7 +89,7 @@ def conv2d(input_, output_dim,
 
 def deconv2d(input_, output_shape,
              k_h=5, k_w=5, d_h=2, d_w=2, stddev=0.02,
-             name="deconv2d", with_w=False, reuse=False):
+             name="deconv2d", with_w=False, reuse=False, padding='SAME'):
     with tf.variable_scope(name):
 	# share variable
 	if reuse:
@@ -100,12 +100,12 @@ def deconv2d(input_, output_shape,
         
         try:
             deconv = tf.nn.conv2d_transpose(input_, w, output_shape=output_shape,
-                                strides=[1, d_h, d_w, 1])
+                                strides=[1, d_h, d_w, 1], padding=padding)
 
         # Support for verisons of TensorFlow before 0.7.0
         except AttributeError:
             deconv = tf.nn.deconv2d(input_, w, output_shape=output_shape,
-                                strides=[1, d_h, d_w, 1])
+                                strides=[1, d_h, d_w, 1], padding=padding)
 
         biases = tf.get_variable('biases', [output_shape[-1]], initializer=tf.constant_initializer(0.0))
         deconv = tf.reshape(tf.nn.bias_add(deconv, biases), deconv.get_shape())

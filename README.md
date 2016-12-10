@@ -62,7 +62,7 @@ tensorboard --logdir=logs
 ## TODOs
 
 - **Modify the network structure to get the better results**
-- Try to use in different dataset
+- Try to use in different dataset(WIP)
 
 ## Reference
 This code is heavily built on these repo:   
