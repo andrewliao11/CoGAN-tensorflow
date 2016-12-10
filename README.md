@@ -48,12 +48,17 @@ tensorboard --logdir=logs
 ## Results
 
 - model in 1st epoch   
-![](https://github.com/andrewliao11/CoGAN-tensorflow/blob/master/asset/top_train_01_0453.png?raw=true)
-![](https://github.com/andrewliao11/CoGAN-tensorflow/blob/master/asset/bot_train_01_0453.png?raw=true)
+![](https://github.com/andrewliao11/CoGAN-tensorflow/blob/master/samples/top/train_01_0053.png?raw=true)
+![](https://github.com/andrewliao11/CoGAN-tensorflow/blob/master/samples/bot/train_01_0453.png?raw=true)
 
-- model in 24th epoch   
-![](https://github.com/andrewliao11/CoGAN-tensorflow/blob/master/asset/top_train_24_0495.png?raw=true)
-![](https://github.com/andrewliao11/CoGAN-tensorflow/blob/master/asset/bot_train_24_0495.png?raw=true)
+- model in 5th epoch
+![](https://github.com/andrewliao11/CoGAN-tensorflow/blob/master/samples/top/train_05_0069.png?raw=true)
+![](https://github.com/andrewliao11/CoGAN-tensorflow/blob/master/samples/bot/train_05_0069.png?raw=true)
+
+
+- model in 24th epoch
+![](https://github.com/andrewliao11/CoGAN-tensorflow/blob/master/samples/top/train_24_0095.png?raw=true)
+![](https://github.com/andrewliao11/CoGAN-tensorflow/blob/master/samples/bot/train_24_0095.png?raw=true)
 
 - ***We can see that without paired infomation, the network can generate two different images with the same high-level concepts.***   
 - ***Note: To avoid the fast convergence of D (discriminator) network, G (generator) network is updated twice for each D network update, which differs from original paper.***
