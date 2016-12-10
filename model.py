@@ -115,9 +115,9 @@ class CoGAN(object):
         self.G2_sum = tf.image_summary("G2", self.G2)
 
 	# B1
-        self.d1_loss_real = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(self.D1_logits, tf.ones_like(self.D1)))
-        self.d1_loss_fake = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(self.D1_logits_, tf.zeros_like(self.D1_)))
-        self.g1_loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(self.D1_logits_, tf.ones_like(self.D1_)))
+        self.d1_loss_real = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(self.D1_logits, tf.ones_like(self.D1)*0.9))
+        self.d1_loss_fake = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(self.D1_logits_,tf.ones_like(self.D1_)*0.1))
+        self.g1_loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(self.D1_logits_, tf.ones_like(self.D1_)*0.9))
 	self.d1_loss_real_sum = tf.scalar_summary("d1_loss_real", self.d1_loss_real)
         self.d1_loss_fake_sum = tf.scalar_summary("d1_loss_fake", self.d1_loss_fake)
 	self.d1_loss = self.d1_loss_real + self.d1_loss_fake
@@ -125,9 +125,9 @@ class CoGAN(object):
         self.d1_loss_sum = tf.scalar_summary("d1_loss", self.d1_loss)
 
 	# B2
-        self.d2_loss_real = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(self.D2_logits, tf.ones_like(self.D2)))
-        self.d2_loss_fake = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(self.D2_logits_, tf.zeros_like(self.D2_)))
-        self.g2_loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(self.D2_logits_, tf.ones_like(self.D2_)))
+        self.d2_loss_real = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(self.D2_logits, tf.ones_like(self.D2)*0.9))
+        self.d2_loss_fake = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(self.D2_logits_,tf.ones_like(self.D2_)*0.1))
+        self.g2_loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(self.D2_logits_, tf.ones_like(self.D2_)*0.9))
         self.d2_loss_real_sum = tf.scalar_summary("d2_loss_real", self.d2_loss_real)
         self.d2_loss_fake_sum = tf.scalar_summary("d2_loss_fake", self.d2_loss_fake)
         self.d2_loss = self.d2_loss_real + self.d2_loss_fake
@@ -142,11 +142,6 @@ class CoGAN(object):
 	# all variable
         t_vars = tf.trainable_variables()
 	# variable list
-        self.d1_vars = [var for var in t_vars if 'd1_' in var.name] + [var for var in t_vars if 'd_' in var.name]
-        self.g1_vars = [var for var in t_vars if 'g1_' in var.name] + [var for var in t_vars if 'g_' in var.name]
-        self.d2_vars = [var for var in t_vars if 'd2_' in var.name] + [var for var in t_vars if 'd_' in var.name]
-        self.g2_vars = [var for var in t_vars if 'g2_' in var.name] + [var for var in t_vars if 'g_' in var.name]
-
 	self.g_vars = [var for var in t_vars if 'g1_' in var.name] + [var for var in t_vars if 'g2_' in var.name] \
 				+ [var for var in t_vars if 'g_' in var.name]
 	self.d_vars = [var for var in t_vars if 'd1_' in var.name] + [var for var in t_vars if 'd2_' in var.name] \
@@ -172,18 +167,6 @@ class CoGAN(object):
 	data_X2 = data_X2[idx]
 	data_y2 = data_y[idx]
 
-	'''
-	# branch 1
-        d1_optim = tf.train.AdamOptimizer(config.learning_rate, beta1=config.beta1) \
-                          .minimize(self.d1_loss, var_list=self.d1_vars)
-        g1_optim = tf.train.AdamOptimizer(config.learning_rate, beta1=config.beta1) \
-                          .minimize(self.g1_loss, var_list=self.g1_vars)
-	# branch 2
-        d2_optim = tf.train.AdamOptimizer(config.learning_rate, beta1=config.beta1) \
-                          .minimize(self.d2_loss, var_list=self.d2_vars)
-        g2_optim = tf.train.AdamOptimizer(config.learning_rate, beta1=config.beta1) \
-                          .minimize(self.g2_loss, var_list=self.g2_vars)
-	'''
 	d_optim = tf.train.AdamOptimizer(config.learning_rate, beta1=config.beta1) \
                           .minimize(self.d_loss, var_list=self.d_vars)
         g_optim = tf.train.AdamOptimizer(config.learning_rate, beta1=config.beta1) \
@@ -201,7 +184,7 @@ class CoGAN(object):
         self.writer = tf.train.SummaryWriter("./logs", self.sess.graph)
 
 	# sample noise
-        sample_z = np.random.uniform(-1, 1, size=(self.batch_size , self.z_dim))
+        sample_z = np.random.normal(size=(self.batch_size , self.z_dim))
         sample_images1 = data_X1[0:self.batch_size]
 	sample_images2 = data_X2[0:self.batch_size]
         sample_labels1 = data_y1[0:self.batch_size]
@@ -224,7 +207,7 @@ class CoGAN(object):
                 batch_labels1 = data_y1[idx*config.batch_size:(idx+1)*config.batch_size]
 		batch_labels2 = data_y2[idx*config.batch_size:(idx+1)*config.batch_size]
 		# z is the noise
-                batch_z = np.random.uniform(-1, 1, [config.batch_size, self.z_dim]).astype(np.float32)
+                batch_z = np.random.normal(size=[config.batch_size, self.z_dim]).astype(np.float32)
 		# Update D network
                 _, summary_str = self.sess.run([d_optim, self.d1_sum],
                         feed_dict={ self.images1: batch_images1, self.images2: batch_images2, 
@@ -235,54 +218,11 @@ class CoGAN(object):
                 _, summary_str = self.sess.run([g_optim, self.g1_sum],
                         feed_dict={ self.z: batch_z})
                 self.writer.add_summary(summary_str, counter)
-
                 # Run g_optim twice to make sure that d_loss does not go to zero (different from paper)
                 _, summary_str = self.sess.run([g_optim, self.g1_sum],
                         feed_dict={ self.z: batch_z})
                 self.writer.add_summary(summary_str, counter)
 
-		'''
-		# ----------- Branch 1 ----------
-                # Update D network
-                _, summary_str = self.sess.run([d1_optim, self.d1_sum],
-                        feed_dict={ self.images1: batch_images1, self.z: batch_z, self.y:batch_labels1 })
-                self.writer.add_summary(summary_str, counter)
-
-                # Update G network
-                _, summary_str = self.sess.run([g1_optim, self.g1_sum],
-                        feed_dict={ self.z: batch_z, self.y:batch_labels1 })
-                self.writer.add_summary(summary_str, counter)
-
-                # Run g_optim twice to make sure that d_loss does not go to zero (different from paper)
-                _, summary_str = self.sess.run([g1_optim, self.g1_sum],
-                        feed_dict={ self.z: batch_z, self.y:batch_labels1 })
-                self.writer.add_summary(summary_str, counter)
-                errD1_fake = self.d1_loss_fake.eval({self.z: batch_z, self.y:batch_labels1})
-                errD1_real = self.d1_loss_real.eval({self.images1: batch_images1, self.y:batch_labels1})
-                errG1 = self.g1_loss.eval({self.z: batch_z, self.y:batch_labels1})
-                # ----------- Branch 2 ----------
-                # Update D network
-                _, summary_str = self.sess.run([d2_optim, self.d2_sum],
-                        feed_dict={ self.images2: batch_images2, self.z: batch_z, self.y:batch_labels2 })
-                self.writer.add_summary(summary_str, counter)
-
-                # Update G network
-                _, summary_str = self.sess.run([g2_optim, self.g2_sum],
-                        feed_dict={ self.z: batch_z, self.y:batch_labels2 })
-                self.writer.add_summary(summary_str, counter)
-                    
-                # Run g_optim twice to make sure that d_loss does not go to zero (different from paper)
-                _, summary_str = self.sess.run([g2_optim, self.g2_sum],
-                        feed_dict={ self.z: batch_z, self.y:batch_labels2 })
-                self.writer.add_summary(summary_str, counter)
- 		
-                errD2_fake = self.d2_loss_fake.eval({self.z: batch_z, self.y:batch_labels2})
-                errD2_real = self.d2_loss_real.eval({self.images2: batch_images2, self.y:batch_labels2})
-                errG2 = self.g2_loss.eval({self.z: batch_z, self.y:batch_labels2})
-		
-		errD = errD1_fake+errD1_real+errD2_fake+errD2_real
-		errG = errG1+errG2
-		'''
 		errD = self.d_loss.eval({self.z: batch_z, self.images1: batch_images1, self.images2: batch_images2})
 		errG = self.g_loss.eval({self.z: batch_z})
                 counter += 1
@@ -314,7 +254,7 @@ class CoGAN(object):
                  [self.sampler1, self.d1_loss, self.g1_loss],
                  feed_dict={self.z: sample_z, self.images1: sample_images1, self.y:batch_labels1}
              )
-        save_images(samples1[:self.sample_size], [8, 8], img_name)
+        save_images(samples1[:self.sample_size], [8, 8], img_name, type='BW')
         print("[Sample T] d_loss: %.8f, g_loss: %.8f" % (d1_loss, g1_loss))
 
         # sample is the generated image
@@ -322,7 +262,7 @@ class CoGAN(object):
                  [self.sampler2, self.d2_loss, self.g2_loss],
                  feed_dict={self.z: sample_z, self.images2: sample_images2, self.y:batch_labels2}
              )
-        save_images(samples2[:self.sample_size], [8, 8], img_name.replace('top', 'bot'))
+        save_images(samples2[:self.sample_size], [8, 8], img_name.replace('top', 'bot'), type='BW')
         print("[Sample B] d_loss: %.8f, g_loss: %.8f" % (d2_loss, g2_loss))
 
     def discriminator(self, image, y=None, share_params=False, reuse=False, name='D'):
@@ -340,13 +280,16 @@ class CoGAN(object):
 	    if reuse:
 		tf.get_variable_scope().reuse_variables()
 
-            h0 = lrelu(conv2d(image, self.c_dim, name='d'+branch+'_h0_conv', reuse=False))
+            h0 = prelu(conv2d(image, self.c_dim, name='d'+branch+'_h0_conv', reuse=False), 
+					name='d'+branch+'_h0_prelu', reuse=False)
 
-            h1 = lrelu(d_bn1(conv2d(h0, self.df_dim, name='d'+branch+'_h1_conv', reuse=False), reuse=reuse))
+            h1 = prelu(d_bn1(conv2d(h0, self.df_dim, name='d'+branch+'_h1_conv', reuse=False), reuse=reuse), 
+					name='d'+branch+'_h1_prelu', reuse=False)
             h1 = tf.reshape(h1, [self.batch_size, -1])            
 
         # layers that share variables
-        h2 = lrelu(self.d_bn2(linear(h1, self.dfc_dim, 'd_h2_lin', reuse=share_params), reuse=share_params))
+        h2 = prelu(self.d_bn2(linear(h1, self.dfc_dim, 'd_h2_lin', reuse=share_params),reuse=share_params), 
+					name='d_h2_prelu', reuse=share_params)
 
         h3 = linear(h2, 1, 'd_h3_lin', reuse=share_params)
             
@@ -363,13 +306,15 @@ class CoGAN(object):
         s = self.output_size
         s2, s4 = int(s/2), int(s/4) 
 
-        h0 = tf.nn.relu(self.g_bn0(linear(z, self.gfc_dim, 'g_h0_lin', reuse=share_params), reuse=share_params))
+        h0 = prelu(self.g_bn0(linear(z, self.gfc_dim, 'g_h0_lin', reuse=share_params), reuse=share_params), 
+						name='g_h0_prelu', reuse=share_params)
 
-        h1 = tf.nn.relu(self.g_bn1(linear(z, self.gf_dim*2*s4*s4,'g_h1_lin',reuse=share_params),reuse=share_params))
+        h1 = prelu(self.g_bn1(linear(z, self.gf_dim*2*s4*s4,'g_h1_lin',reuse=share_params),reuse=share_params),
+						name='g_h1_prelu', reuse=share_params)
         h1 = tf.reshape(h1, [self.batch_size, s4, s4, self.gf_dim * 2])
 
-        h2 = tf.nn.relu(self.g_bn2(deconv2d(h1, [self.batch_size,s2,s2,self.gf_dim * 2], 
-				name='g_h2', reuse=share_params), reuse=share_params))
+        h2 = prelu(self.g_bn2(deconv2d(h1, [self.batch_size,s2,s2,self.gf_dim * 2], 
+			name='g_h2', reuse=share_params), reuse=share_params), name='g_h2_prelu', reuse=share_params)
 
 	# layers that don't share the variable
 	with tf.variable_scope(name):

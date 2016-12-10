@@ -117,7 +117,14 @@ def deconv2d(input_, output_shape,
        
 
 def lrelu(x, leak=0.2, name="lrelu"):
-  return tf.maximum(x, leak*x)
+    return tf.maximum(x, leak*x)
+
+def prelu(x, stddev=0.02, name="prelu", reuse=False):
+    with tf.variable_scope(name):
+	if reuse:
+	    tf.get_variable_scope().reuse_variables()
+	t = tf.get_variable("tangent", [1], tf.float32, tf.random_normal_initializer(stddev=stddev))
+    return tf.maximum(x, tf.mul(x, t))
 
 def linear(input_, output_size, scope=None, stddev=0.02, bias_start=0.0, with_w=False, reuse=False):
     shape = input_.get_shape().as_list()

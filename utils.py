@@ -65,8 +65,11 @@ class celebA():
 def get_image(image_path, image_size, is_crop=True, resize_w=64, is_grayscale = False):
     return transform(imread(image_path, is_grayscale), image_size, is_crop, resize_w)
 
-def save_images(images, size, image_path):
-    return imsave(inverse_transform(images), size, image_path)
+def save_images(images, size, image_path, type='RGB'):
+    if type == 'RGB':
+    	return imsave(inverse_transform(images), size, image_path)
+    elif type == 'BW':
+	return imsave(images, size, image_path)
 
 def imread(path, is_grayscale = False):
     if (is_grayscale):
