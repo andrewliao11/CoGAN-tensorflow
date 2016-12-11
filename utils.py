@@ -110,10 +110,12 @@ def transform(image, npx=64, is_crop=True, resize_w=64):
         cropped_image = image
     # resize the image
     cropped_image = scipy.misc.imresize(cropped_image, (resize_w,resize_w))
-    return np.array(cropped_image)/127.5 - 1.
+    # -1~1
+    return (np.array(cropped_image)/255.-0.5)*2
 
 def inverse_transform(images):
-    return (images+1.)/2.
+    # -1~1 -> 0~1
+    return images/2.+0.5
 
 def to_json(output_path, *layers):
     with open(output_path, "w") as layer_f:
