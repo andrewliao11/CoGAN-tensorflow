@@ -84,7 +84,7 @@ class CoGAN(object):
             self.y= tf.placeholder(tf.float32, [self.batch_size, self.y_dim], name='y')
 	# latent variable
         self.z = tf.placeholder(tf.float32, [None, self.z_dim], name='z')
-        self.z_sum = tf.histogram_summary("z", self.z)
+        self.z_sum = tf.summary.histogram("z", self.z)
 
 	'''
 	The share_params FLAG denotes the share weight btn two network(G, D)
@@ -105,40 +105,40 @@ class CoGAN(object):
 	self.D2_logits_, self.D2_ = self.discriminator(self.G2, self.y, share_params=True, reuse=True, name='D2')
         
 	# B1
-        self.d1_sum = tf.histogram_summary("d1", self.D1)
-        self.d1__sum = tf.histogram_summary("d1_", self.D1_)
-        self.G1_sum = tf.image_summary("G1", self.G1)
+        self.d1_sum = tf.summary.histogram("d1", self.D1)
+        self.d1__sum = tf.summary.histogram("d1_", self.D1_)
+        self.G1_sum = tf.summary.image("G1", self.G1)
 
 	# B2
-	self.d2_sum = tf.histogram_summary("d2", self.D2)
-        self.d2__sum = tf.histogram_summary("d2_", self.D2_)
-        self.G2_sum = tf.image_summary("G2", self.G2)
+	self.d2_sum = tf.summary.histogram("d2", self.D2)
+        self.d2__sum = tf.summary.histogram("d2_", self.D2_)
+        self.G2_sum = tf.summary.image("G2", self.G2)
 
 	# B1
         self.d1_loss_real = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(self.D1_logits, tf.ones_like(self.D1)*0.9))
         self.d1_loss_fake = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(self.D1_logits_,tf.ones_like(self.D1_)*0.1))
         self.g1_loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(self.D1_logits_, tf.ones_like(self.D1_)*0.9))
-	self.d1_loss_real_sum = tf.scalar_summary("d1_loss_real", self.d1_loss_real)
-        self.d1_loss_fake_sum = tf.scalar_summary("d1_loss_fake", self.d1_loss_fake)
+	self.d1_loss_real_sum = tf.summary.scalar("d1_loss_real", self.d1_loss_real)
+        self.d1_loss_fake_sum = tf.summary.scalar("d1_loss_fake", self.d1_loss_fake)
 	self.d1_loss = self.d1_loss_real + self.d1_loss_fake
-	self.g1_loss_sum = tf.scalar_summary("g1_loss", self.g1_loss)
-        self.d1_loss_sum = tf.scalar_summary("d1_loss", self.d1_loss)
+	self.g1_loss_sum = tf.summary.scalar("g1_loss", self.g1_loss)
+        self.d1_loss_sum = tf.summary.scalar("d1_loss", self.d1_loss)
 
 	# B2
         self.d2_loss_real = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(self.D2_logits, tf.ones_like(self.D2)*0.9))
         self.d2_loss_fake = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(self.D2_logits_,tf.ones_like(self.D2_)*0.1))
         self.g2_loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(self.D2_logits_, tf.ones_like(self.D2_)*0.9))
-        self.d2_loss_real_sum = tf.scalar_summary("d2_loss_real", self.d2_loss_real)
-        self.d2_loss_fake_sum = tf.scalar_summary("d2_loss_fake", self.d2_loss_fake)
+        self.d2_loss_real_sum = tf.summary.scalar("d2_loss_real", self.d2_loss_real)
+        self.d2_loss_fake_sum = tf.summary.scalar("d2_loss_fake", self.d2_loss_fake)
         self.d2_loss = self.d2_loss_real + self.d2_loss_fake
-        self.g2_loss_sum = tf.scalar_summary("g2_loss", self.g2_loss)
-        self.d2_loss_sum = tf.scalar_summary("d2_loss", self.d2_loss)
+        self.g2_loss_sum = tf.summary.scalar("g2_loss", self.g2_loss)
+        self.d2_loss_sum = tf.summary.scalar("d2_loss", self.d2_loss)
 
 	# sum together
 	self.d_loss = self.d1_loss+self.d2_loss
 	self.g_loss = self.g1_loss+self.g2_loss
-	self.g_loss_sum = tf.scalar_summary("g_loss", self.g_loss)
-        self.d_loss_sum = tf.scalar_summary("d_loss", self.d_loss)
+	self.g_loss_sum = tf.summary.scalar("g_loss", self.g_loss)
+        self.d_loss_sum = tf.summary.scalar("d_loss", self.d_loss)
 	# all variable
         t_vars = tf.trainable_variables()
 	# variable list
@@ -172,16 +172,16 @@ class CoGAN(object):
         g_optim = tf.train.AdamOptimizer(config.learning_rate, beta1=config.beta1) \
                           .minimize(self.g_loss, var_list=self.g_vars)
 
-        tf.initialize_all_variables().run()
+	tf.global_variables_initializer().run()
 
-        self.g1_sum = tf.merge_summary([self.z_sum, self.d1__sum, 
+        self.g1_sum = tf.summary.merge([self.z_sum, self.d1__sum, 
             self.G1_sum, self.d1_loss_fake_sum, self.g1_loss_sum])
-        self.d1_sum = tf.merge_summary([self.z_sum, self.d1_sum, self.d1_loss_real_sum, self.d1_loss_sum])
+        self.d1_sum = tf.summary.merge([self.z_sum, self.d1_sum, self.d1_loss_real_sum, self.d1_loss_sum])
 
-        self.g2_sum = tf.merge_summary([self.z_sum, self.d2__sum,
+        self.g2_sum = tf.summary.merge([self.z_sum, self.d2__sum,
             self.G2_sum, self.d2_loss_fake_sum, self.g2_loss_sum])
-        self.d2_sum = tf.merge_summary([self.z_sum, self.d2_sum, self.d2_loss_real_sum, self.d2_loss_sum])
-        self.writer = tf.train.SummaryWriter("./logs", self.sess.graph)
+        self.d2_sum = tf.summary.merge([self.z_sum, self.d2_sum, self.d2_loss_real_sum, self.d2_loss_sum])
+        self.writer = tf.summary.FileWriter("./logs", self.sess.graph)
 
 	# sample noise
         sample_z = np.random.normal(size=(self.batch_size , self.z_dim))
@@ -305,7 +305,6 @@ class CoGAN(object):
 	# layers that share the variables 
         s = self.output_size
         s2, s4 = int(s/2), int(s/4) 
-
         h0 = prelu(self.g_bn0(linear(z, self.gfc_dim, 'g_h0_lin', reuse=share_params), reuse=share_params), 
 						name='g_h0_prelu', reuse=share_params)
 
@@ -363,7 +362,7 @@ class CoGAN(object):
 	# convert label into one-hot
         y_vec = np.zeros((len(y), self.y_dim), dtype=np.float)
         for i, label in enumerate(y):
-            y_vec[i,y[i]] = 1.0
+            y_vec[i,int(y[i])] = 1.0
         
 	# conver to 0~1 is more convenient
         return X/255.,y_vec
