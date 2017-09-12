@@ -17,7 +17,7 @@ The following image is the model architecture referred in the paper:
 ## Requirement
 
 - Python 2.7
-- Tensorlfow
+- Tensorflow.0.12
 
 ## Kick off
 First you have to clone this repo:
