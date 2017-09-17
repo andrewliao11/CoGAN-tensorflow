@@ -105,14 +105,14 @@ def download_lsun(dirpath):
         _download_lsun(data_dir, category, 'val', tag)
     _download_lsun(data_dir, '', 'test', tag)
 
-def download_mnist(dirpath):
+def download_mnist(dirpath, use_fashion=False):
     data_dir = os.path.join(dirpath, 'mnist')
     if os.path.exists(data_dir):
         print('Found MNIST - skip')
         return
     else:
         os.mkdir(data_dir)
-    url_base = 'http://yann.lecun.com/exdb/mnist/' 
+    url_base = 'http://yann.lecun.com/exdb/mnist/' if not use_fashion else 'http://fashion-mnist.s3-website.eu-central-1.amazonaws.com/'
     file_names = ['train-images-idx3-ubyte.gz','train-labels-idx1-ubyte.gz','t10k-images-idx3-ubyte.gz','t10k-labels-idx1-ubyte.gz']
     for file_name in file_names:
         url = (url_base+file_name).format(**locals())
