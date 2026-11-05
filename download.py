@@ -25,7 +25,7 @@ parser.add_argument('datasets', metavar='N', type=str, nargs='+', choices=['cele
 def download(url, dirpath):
     filename = url.split('/')[-1]
     filepath = os.path.join(dirpath, filename)
-    u = urllib.request.urlopen(url)
+    u = urllib.request.urlopen(url, timeout=30)
     f = open(filepath, 'wb')
     filesize = int(u.headers["Content-Length"])
     print("Downloading: %s Bytes: %s" % (filename, filesize))
